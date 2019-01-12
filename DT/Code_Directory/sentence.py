@@ -1,23 +1,15 @@
-class WordTag:
-    """word-tag class"""
-    def __init__(self, word, pos):
-        """init word and tag"""
-        self.word = word
-        self.pos = pos
-
-
 class Sentence:
     """sentence class"""
     def __init__(self, word_list, pos_list):
-        """init sentence list of WordTag"""
-        self._sentence = [WordTag('ROOT', 'ROOT')]
+        """init sentence list of WordPos"""
+        self._sentence = [('ROOT', 'ROOT')]
         for word, pos in zip(word_list, pos_list):
-            self._sentence.append(WordTag(word, pos))
-        self._sentence_len = len(self._sentence)
+            self._sentence.append((word, pos))
+        self.sentence_len = len(self._sentence)
 
     def __call__(self, index):
         """return word tag from sentence with index 'index'"""
-        return self._sentence[index]
+        return self._sentence[index][0], self._sentence[index][1]
 
 
 class LabeledSentence(Sentence):
@@ -37,14 +29,4 @@ class LabeledSentence(Sentence):
     def dependency_tree(self):
         """return dependency tree"""
         return self._dt
-
-
-if __name__ == '__main__':
-    # validate WordTag class
-    word_tag = WordTag('pc', 'nn')
-    assert word_tag.word == 'pc'
-    assert word_tag.pos == 'nn'
-    # validate Sentence class
-
-    # validate LabeledSentence class
 
