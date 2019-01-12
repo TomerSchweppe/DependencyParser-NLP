@@ -1,3 +1,6 @@
+# !/usr/bin/env python
+
+
 class Sentence:
     """sentence class"""
     def __init__(self, word_list, pos_list):

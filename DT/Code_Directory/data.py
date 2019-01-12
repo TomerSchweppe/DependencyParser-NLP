@@ -1,3 +1,4 @@
+# !/usr/bin/env python
 from sentence import *
 
 
@@ -107,5 +108,7 @@ if __name__ == '__main__':
     assert ('cancer', 'NN') in train.word_pos_pairs
     assert ('federal', 'JJ') in test.word_pos_pairs
     assert ('entertained', 'VBN') in comp.word_pos_pairs
+
+    #print(len(train.vocab_list), len(train.pos_list), len(train.word_pos_pairs))
 
     print('PASSED!')
