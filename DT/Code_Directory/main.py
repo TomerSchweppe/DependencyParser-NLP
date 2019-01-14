@@ -5,16 +5,24 @@ import argparse
 import pickle
 import time
 
+def tree_2_parent(tree):
+    p_dict = dict()
+    for p, children in tree.items():
+        for c in children:
+            p_dict[c] = p
+    return p_dict
+
+
 def evaluate(labeled_data, w, perceptron):
     """evaluate model accuracy per word"""
     total = 0
     correct = 0
     for idx, sentence in enumerate(labeled_data.sentences):
-        ground_truth = sentence.dependency_tree()
-        predicted = perceptron.sentence_inference(w, sentence.sentence_len, perceptron._f_dict_list[idx])
-        for h in range(sentence.sentence_len):
+        ground_truth = tree_2_parent(sentence.dependency_tree())
+        predicted = tree_2_parent(perceptron.sentence_inference(w, sentence.sentence_len, perceptron._f_dict_list[idx]))
+        for h in range(1, sentence.sentence_len):
             total += 1
-            if ground_truth.get(h, []) == predicted.get(h, []):
+            if predicted[h] == ground_truth[h]:
                 correct += 1
     return correct/total
 
