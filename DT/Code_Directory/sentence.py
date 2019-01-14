@@ -33,3 +33,19 @@ class LabeledSentence(Sentence):
         """return dependency tree"""
         return self._dt
 
+if __name__ == '__main__':
+    word_list = ['ofir', 'tomer', 'nadav', 'roy']
+    pos_list = ['S', 'S', 'T', 'T']
+
+    # validate sentence
+    sen = Sentence(word_list, pos_list)
+    assert sen.sentence_len == 4 + 1
+    assert sen._sentence == [('ROOT', 'ROOT'), ('ofir', 'S'), ('tomer', 'S'), ('nadav','T'), ('roy', 'T')]
+
+    # validate labaled sentence
+    labels_list = [0, 1, 2, 3]
+    l_sen = LabeledSentence(word_list, pos_list, labels_list)
+    assert l_sen._sentence == [('ROOT', 'ROOT'), ('ofir', 'S'), ('tomer', 'S'), ('nadav','T'), ('roy', 'T')]
+    assert l_sen.dependency_tree() == {0: [1], 1: [2], 2: [3], 3: [4]}
+
+    print('PASSED!')
