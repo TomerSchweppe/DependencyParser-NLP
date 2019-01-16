@@ -17,10 +17,6 @@ class Feature:
         """call function"""
         pass
 
-    def feature_vec(self):
-        """return tuple of '1' position and feature length """
-        pass
-
 
 class WordPos(Feature):
     """word pos feature class"""
@@ -109,7 +105,7 @@ class BasicFeatures:
         return sum
 
 
-    def __call__(self, h, m ,sentence):
+    def __call__(self, h, m, sentence):
         """return list of all features"""
         p_word = sentence(h)[0]
         c_word = sentence(m)[0]
@@ -129,8 +125,37 @@ class BasicFeatures:
         return [f_p_word_p_pos, f_p_word, f_p_pos, f_c_word_c_pos, f_c_word, f_c_pos, f_c_word_c_pos_p_pos, f_p_word_p_pos_c_pos, f_p_pos_c_pos]
 
 
-class ComplexFeatures:
-    pass
+class ComplexFeatures(BasicFeatures):
+    """complex features class"""
+    def __init__(self, vocab_list, pos_list, word_pos_pairs):
+        """init features"""
+        super(ComplexFeatures, self).__init__(vocab_list, pos_list, word_pos_pairs)
+
+    def __call__(self, h, m, sentence):
+        """return list of all features"""
+        basic_features = super(ComplexFeatures, self).__call__(h, m, sentence)
+
+        # POS of h+1
+        if h + 1 >= sentence.sentence_len:
+            f_h1_pos = self._f_pos(None)
+            f_h1_pos_h_pos = self._f_pos_pos(None, sentence(h)[1])
+            f_h1_pos_m_pos = self._f_pos_pos(None, sentence(m)[1])
+        else:
+            f_h1_pos = self._f_pos(sentence(h + 1)[1])
+            f_h1_pos_h_pos = self._f_pos_pos(sentence(h + 1)[1], sentence(h)[1])
+            f_h1_pos_m_pos = self._f_pos_pos(sentence(h + 1)[1], sentence(m)[1])
+
+        # POS of m-1
+        if m == 0:
+            f_m_1_pos = self._f_pos(None)
+            f_m_1_pos_m_pos = self._f_pos_pos(None, sentence(m)[1])
+            f_m_1_pos_h_pos = self._f_pos_pos(None, sentence(h)[1])
+        else:
+            f_m_1_pos = self._f_pos(sentence(m-1)[1])
+            f_m_1_pos_m_pos = self._f_pos_pos(sentence(m-1)[1], sentence(m)[1])
+            f_m_1_pos_h_pos = self._f_pos_pos(sentence(m-1)[1], sentence(h)[1])
+
+        return basic_features + [f_h1_pos, f_h1_pos_h_pos, f_h1_pos_m_pos, f_m_1_pos_m_pos, f_m_1_pos_h_pos, f_m_1_pos]
 
 
 if __name__ == '__main__':
