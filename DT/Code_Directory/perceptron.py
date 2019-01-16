@@ -2,26 +2,58 @@
 from chu_liu import *
 import numpy as np
 import time
-from multiprocessing import cpu_count
-from multiprocessing import Pool
 
 
 class Perceptron:
     """perceptron class"""
-    def __init__(self, data, features, edge_max_len = -1):
+    def __init__(self, data, features):
         """init perceptron, extract all features"""
         self._data = data
         self._features = features
-        self._edge_max_len = edge_max_len
         self._f_dict_list = self.extract_features(data, features)
+        self._full_graphs = dict()
+        for sentence in self._data.sentences:
+            if sentence.sentence_len not in self._full_graphs:
+                self._full_graphs[sentence.sentence_len] = self.full_graph(sentence.sentence_len)
 
+    def prune(self, h, m, sentence):
+        """prune implausible edges"""
+        # source: http://aclweb.org/anthology/C10-1007
+        h_pos = sentence(h)[1]
+        m_pos = sentence(m)[1]
+
+        if h_pos in ['"', '.', ';', '|', 'CC', 'PRP$', 'PRP', 'EX', '-RRB-', '-LRB-']: return True
+
+        if m_pos in ['EX', 'LS', 'POS', 'PRP$'] and h < m: return True
+
+        if m_pos in ['.', 'RP'] and h > m: return True
+
+        if h == 0 and h_pos in [',', 'DT']: return True
+
+        if h < m:
+            if h_pos == 'DT' and m_pos in ['DT', 'JJ', 'NN', 'NNP', 'NNS', '.']: return True
+
+            if h_pos == 'CD' and m_pos == 'CD': return True
+
+            if h_pos == 'NN' and m_pos in ['DT', 'NNP']: return True
+
+            if h_pos == 'NNP' and m_pos in ['DT', 'NN', 'NNS']: return True
+
+        if h > m:
+            if m_pos == 'DT' and h_pos in ['DT', 'IN', 'JJ', 'NN', 'NNP']: return True
+
+            if m_pos == 'NNP' and h_pos == 'IN': return True
+
+            if m_pos == 'IN' and h_pos == 'JJ': return True
+
+        return False
 
     def features_dict(self, sentence, features):
         """generate features dictionary per sentence"""
         f_dict = dict()
         for h in range(sentence.sentence_len):
             for m in range(1, sentence.sentence_len):
-                if  self._edge_max_len == -1 or abs(h-m) <= self._edge_max_len:
+                if  not self.prune(h, m ,sentence):
                     f_dict[(h, m)] = features(h, m, sentence)
                 else:
                     f_dict[(h, m)] = []
@@ -45,7 +77,8 @@ class Perceptron:
                 pos += window
             return score
 
-        graph = Digraph(self.full_graph(sentence_len), get_score)
+        graph = Digraph(self._full_graphs[sentence_len], get_score)
+
         mst = graph.mst()
         return mst.successors
 
@@ -83,6 +116,8 @@ class Perceptron:
                 if inference_d_tree != sentence.dependency_tree():
                     self.update_weights(w, sentence.dependency_tree(), sentence, self._f_dict_list[idx], 1)
                     self.update_weights(w, inference_d_tree, sentence, self._f_dict_list[idx], -1)
+                else:
+                    print('correct')
         return w
 
 
