@@ -1,7 +1,6 @@
 # !/usr/bin/env python
 from sentence import *
 
-
 def sentence_preprocess(sentence_txt, is_labeled):
     """generate Sentence object from given sentence text"""
     word_list = []
@@ -11,7 +10,8 @@ def sentence_preprocess(sentence_txt, is_labeled):
         args = line.split()
         word_list.append(args[1])
         pos_list.append(args[3])
-        labels_list.append(int(args[6]))
+        if is_labeled:
+            labels_list.append(int(args[6]))
     if is_labeled:
         return LabeledSentence(word_list, pos_list, labels_list)
     return Sentence(word_list, pos_list)
@@ -31,6 +31,7 @@ def word_pos_wordpos_lists(sentences):
             word_set.add(word)
             pos_set.add(pos)
             word_pos_pairs.add((word, pos))
+
     return sorted(list(word_set)), sorted(list(pos_set)), sorted(list(word_pos_pairs))
 
 
@@ -74,17 +75,18 @@ if __name__ == '__main__':
 
     # validate dependency tree
     tmp_dict = test.sentences[0].dependency_tree()
-    assert tmp_dict['4'] == [1, 2, 3]
-    assert tmp_dict['6'] == [7]
-    assert tmp_dict['5'] == [4, 6, 17]
-    assert tmp_dict['7'] == [9]
-    assert tmp_dict['16'] == [15]
-    assert tmp_dict['10'] == [11]
-    assert tmp_dict['0'] == [5]
-    assert tmp_dict['9'] == [8, 10, 14]
-    assert tmp_dict['14'] == [16]
-    assert tmp_dict['11'] == [12, 13]
+    assert tmp_dict[4] == [1, 2, 3]
+    assert tmp_dict[6] == [7]
+    assert tmp_dict[5] == [4, 6, 17]
+    assert tmp_dict[7] == [9]
+    assert tmp_dict[16] == [15]
+    assert tmp_dict[10] == [11]
+    assert tmp_dict[0] == [5]
+    assert tmp_dict[9] == [8, 10, 14]
+    assert tmp_dict[14] == [16]
+    assert tmp_dict[11] == [12, 13]
     assert len(tmp_dict) == 10
+
 
     # validate vocab
     assert 'ROOT' in train.vocab_list
