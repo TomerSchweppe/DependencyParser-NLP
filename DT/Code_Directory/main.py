@@ -1,3 +1,4 @@
+# !/usr/bin/env python
 from data import *
 from perceptron import *
 from features import *
@@ -20,9 +21,9 @@ def evaluate(labeled_data, w, perceptron):
     for idx, sentence in enumerate(labeled_data.sentences):
         ground_truth = tree_2_parent(sentence.dependency_tree())
         predicted = tree_2_parent(perceptron.sentence_inference(w, sentence.sentence_len, perceptron._f_dict_list[idx]))
-        for h in range(1, sentence.sentence_len):
+        for x in range(1, sentence.sentence_len):
             total += 1
-            if predicted[h] == ground_truth[h]:
+            if predicted[x] == ground_truth[x]:
                 correct += 1
     return correct/total
 
@@ -34,7 +35,6 @@ if __name__ == '__main__':
     parser.add_argument("--weights", help="load trained weights")
     parser.add_argument("--N", help="number of iterations", default=1)
     parser.add_argument("--features", help="features type basic/complex", default='basic')
-    parser.add_argument("--edge_max_len", help="maximum edge length", default=-1)
     args = parser.parse_args()
 
     N = int(args.N)
@@ -53,7 +53,7 @@ if __name__ == '__main__':
         # init train
         start = time.time()
         print('extract train features')
-        train_perceptron = Perceptron(train_data, train_features, int(args.edge_max_len))
+        train_perceptron = Perceptron(train_data, train_features)
         print('extract ended', time.time() - start)
 
         # learn train weights
@@ -61,8 +61,14 @@ if __name__ == '__main__':
         print('learn model weights')
         train_w = train_perceptron.train(N)
         print('learning ended: ', time.time() - start)
+        # train evaluation
+        start = time.time()
+        print('train evaluation')
+        train_accuracy = evaluate(train_data, train_w, train_perceptron)
+        print('train accuracy: ', train_accuracy)
+        print('evaluation ended: ', time.time() - start)
         # save train weights
-        pickle.dump(train_w, open('cache/'+features_type+'_N'+str(N)+'E_'+str(args.edge_max_len)+'.pickle','wb'))
+        pickle.dump(train_w, open('cache/'+features_type+'_N'+str(N)+'.pickle','wb'))
 
     # init test
     start = time.time()
