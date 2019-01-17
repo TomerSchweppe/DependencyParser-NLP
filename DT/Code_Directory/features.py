@@ -66,6 +66,22 @@ class WordPosPos(Feature):
         return other_pos_idx * len(self._word_pos_pairs_idx) + word_pos_idx, len(self._word_pos_pairs_idx) * len(self._pos_idx)
 
 
+class WordPosWordPos(Feature):
+    """word pos word pos feature class"""
+
+    def __init__(self, vocab_list, pos_list, word_pos_pairs):
+        """init"""
+        super(WordPosWordPos, self).__init__(vocab_list, pos_list, word_pos_pairs)
+
+    def __call__(self, p_word, p_pos, c_word, c_pos):
+        """generate feature tuple"""
+        p_word_pos_idx = self._word_pos_pairs_idx.get((p_word, p_pos), -1)
+        c_word_pos_idx = self._word_pos_pairs_idx.get((c_word, c_pos), -1)
+        if p_word_pos_idx == -1 or c_word_pos_idx == -1:
+            return -1, len(self._word_pos_pairs_idx) ** 2
+        return p_word_pos_idx * len(self._word_pos_pairs_idx) + c_word_pos_idx, len(self._word_pos_pairs_idx) ** 2
+
+
 class PosPos(Feature):
     """pos pos feature class"""
     def __init__(self, vocab_list, pos_list, word_pos_pairs):
@@ -77,8 +93,26 @@ class PosPos(Feature):
         pos_idx = self._pos_idx.get(pos, -1)
         other_pos_idx = self._pos_idx.get(other_pos, -1)
         if pos_idx == -1 or other_pos_idx == -1:
-            return -1, len(self._pos_idx)**2
+            return -1, len(self._pos_idx) ** 2
         return other_pos_idx * len(self._pos_idx) + pos_idx, len(self._pos_idx)**2
+
+
+class PosPosPosPos(Feature):
+    """pos pos pos pos feature class"""
+    def __init__(self, vocab_list, pos_list, word_pos_pairs):
+        """init"""
+        super(PosPosPosPos, self).__init__(vocab_list, pos_list, word_pos_pairs)
+
+    def __call__(self, pos1, pos2, pos3, pos4):
+        """generate feature tuple"""
+        pos1_idx = self._pos_idx.get(pos1, -1)
+        pos2_idx = self._pos_idx.get(pos2, -1)
+        pos3_idx = self._pos_idx.get(pos3, -1)
+        pos4_idx = self._pos_idx.get(pos4, -1)
+
+        if -1 in [pos1_idx, pos2_idx, pos3_idx, pos4_idx]:
+            return -1, len(self._pos_idx) ** 4
+        return  pos1_idx * (len(self._pos_idx) ** 3) + pos2_idx * (len(self._pos_idx) ** 2) + pos3_idx * len(self._pos_idx) + pos4_idx, len(self._pos_idx) ** 4
 
 
 class BasicFeatures:
@@ -130,32 +164,49 @@ class ComplexFeatures(BasicFeatures):
     def __init__(self, vocab_list, pos_list, word_pos_pairs):
         """init features"""
         super(ComplexFeatures, self).__init__(vocab_list, pos_list, word_pos_pairs)
+        self._f_word_pos_word_pos = WordPosWordPos(vocab_list, pos_list, word_pos_pairs)
+        self._f_pos_pos_pos_pos = PosPosPosPos(vocab_list, pos_list, word_pos_pairs)
+
 
     def __call__(self, h, m, sentence):
         """return list of all features"""
         basic_features = super(ComplexFeatures, self).__call__(h, m, sentence)
 
-        # POS of h+1
-        if h + 1 >= sentence.sentence_len:
-            f_h1_pos = self._f_pos(None)
-            f_h1_pos_h_pos = self._f_pos_pos(None, sentence(h)[1])
-            f_h1_pos_m_pos = self._f_pos_pos(None, sentence(m)[1])
-        else:
-            f_h1_pos = self._f_pos(sentence(h + 1)[1])
-            f_h1_pos_h_pos = self._f_pos_pos(sentence(h + 1)[1], sentence(h)[1])
-            f_h1_pos_m_pos = self._f_pos_pos(sentence(h + 1)[1], sentence(m)[1])
+        p_word = sentence(h)[0]
+        c_word = sentence(m)[0]
+        p_pos = sentence(h)[1]
+        c_pos = sentence(m)[1]
 
-        # POS of m-1
+        f_p_word_p_pos_c_word_c_pos = self._f_word_pos_word_pos(p_word, p_pos, c_word, c_pos)
+
+        if h == 0:
+            p_pos_1 = None
+        else:
+            p_pos_1 = h - 1
+
         if m == 0:
-            f_m_1_pos = self._f_pos(None)
-            f_m_1_pos_m_pos = self._f_pos_pos(None, sentence(m)[1])
-            f_m_1_pos_h_pos = self._f_pos_pos(None, sentence(h)[1])
+            c_pos_1 = None
         else:
-            f_m_1_pos = self._f_pos(sentence(m-1)[1])
-            f_m_1_pos_m_pos = self._f_pos_pos(sentence(m-1)[1], sentence(m)[1])
-            f_m_1_pos_h_pos = self._f_pos_pos(sentence(m-1)[1], sentence(h)[1])
+            c_pos_1 = m - 1
 
-        return basic_features + [f_h1_pos, f_h1_pos_h_pos, f_h1_pos_m_pos, f_m_1_pos_m_pos, f_m_1_pos_h_pos, f_m_1_pos]
+        if h == sentence.sentence_len:
+            p_pos1 = None
+        else:
+            p_pos1 = h + 1
+
+        if m == sentence.sentence_len:
+            c_pos1 = None
+        else:
+            c_pos1 = m + 1
+
+
+        p_pos_p_pos1_c_pos_1_c_pos = self._f_pos_pos_pos_pos(p_pos, p_pos1, c_pos_1, c_pos)
+        p_pos_1_p_pos_c_pos_1_c_pos = self._f_pos_pos_pos_pos(p_pos_1, p_pos, c_pos_1, c_pos)
+        p_pos_p_pos1_c_pos_c_pos1 = self._f_pos_pos_pos_pos(p_pos, p_pos1, c_pos, c_pos1)
+        p_pos_1_p_pos_c_pos_c_pos1 = self._f_pos_pos_pos_pos(p_pos_1, p_pos, c_pos, c_pos1)
+
+        return basic_features + [f_p_word_p_pos_c_word_c_pos, p_pos_p_pos1_c_pos_1_c_pos, p_pos_1_p_pos_c_pos_1_c_pos,
+                                 p_pos_p_pos1_c_pos_c_pos1, p_pos_1_p_pos_c_pos_c_pos1]
 
 
 if __name__ == '__main__':
@@ -211,5 +262,43 @@ if __name__ == '__main__':
     sentence = Sentence(['alejandro'],['S'])
     assert basic(0, 1, sentence) == [(-1, 4), (-1, 4), (-1, 2), (-1, 4), (-1, 4), (0, 2), (-1, 8), (-1,8), (-1, 4)]
     assert basic.features_len() == 4 + 4 + 2 + 4 + 4 + 2 + 8 + 8 + 4
+
+    # validate word pos word pos
+    word_pos_word_pos = WordPosWordPos(vocab_list, pos_list, word_pos_pairs)
+    assert word_pos_word_pos('ofir', 'S', 'ofir', 'S') == (0, 16)
+    assert word_pos_word_pos('ofir', 'S', 'tomer', 'S') == (1, 16)
+    assert word_pos_word_pos('ofir', 'S', 'nadav', 'T') == (2, 16)
+    assert word_pos_word_pos('ofir', 'S', 'roy', 'T') == (3, 16)
+    assert word_pos_word_pos('tomer', 'S', 'ofir', 'S') == (4, 16)
+    assert word_pos_word_pos('tomer', 'S', 'tomer', 'S') == (5, 16)
+    assert word_pos_word_pos('tomer', 'S', 'nadav', 'T') == (6, 16)
+    assert word_pos_word_pos('tomer', 'S', 'roy', 'T') == (7, 16)
+    assert word_pos_word_pos('nadav', 'T', 'ofir', 'S') == (8, 16)
+    assert word_pos_word_pos('nadav', 'T', 'tomer', 'S') == (9, 16)
+    assert word_pos_word_pos('nadav', 'T', 'nadav', 'T') == (10, 16)
+    assert word_pos_word_pos('nadav', 'T', 'roy', 'T') == (11, 16)
+    assert word_pos_word_pos('roy', 'T', 'ofir', 'S') == (12, 16)
+    assert word_pos_word_pos('roy', 'T', 'tomer', 'S') == (13, 16)
+    assert word_pos_word_pos('roy', 'T', 'nadav', 'T') == (14, 16)
+    assert word_pos_word_pos('roy', 'T', 'roy', 'T') == (15, 16)
+
+    # validate pos pos pos pos
+    pos_pos_pos_pos = PosPosPosPos(vocab_list, pos_list, word_pos_pairs)
+    assert pos_pos_pos_pos('S', 'S', 'S', 'S') == (0, 16)
+    assert pos_pos_pos_pos('S', 'S', 'S', 'T') == (1, 16)
+    assert pos_pos_pos_pos('S', 'S', 'T', 'S') == (2, 16)
+    assert pos_pos_pos_pos('S', 'S', 'T', 'T') == (3, 16)
+    assert pos_pos_pos_pos('S', 'T', 'S', 'S') == (4, 16)
+    assert pos_pos_pos_pos('S', 'T', 'S', 'T') == (5, 16)
+    assert pos_pos_pos_pos('S', 'T', 'T', 'S') == (6, 16)
+    assert pos_pos_pos_pos('S', 'T', 'T', 'T') == (7, 16)
+    assert pos_pos_pos_pos('T', 'S', 'S', 'S') == (8, 16)
+    assert pos_pos_pos_pos('T', 'S', 'S', 'T') == (9, 16)
+    assert pos_pos_pos_pos('T', 'S', 'T', 'S') == (10, 16)
+    assert pos_pos_pos_pos('T', 'S', 'T', 'T') == (11, 16)
+    assert pos_pos_pos_pos('T', 'T', 'S', 'S') == (12, 16)
+    assert pos_pos_pos_pos('T', 'T', 'S', 'T') == (13, 16)
+    assert pos_pos_pos_pos('T', 'T', 'T', 'S') == (14, 16)
+    assert pos_pos_pos_pos('T', 'T', 'T', 'T') == (15, 16)
 
     print('PASSED!')
