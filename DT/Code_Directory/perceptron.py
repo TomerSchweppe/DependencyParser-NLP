@@ -2,7 +2,8 @@
 from chu_liu import *
 import numpy as np
 import time
-
+from random import randint
+from random import shuffle
 
 class Perceptron:
     """perceptron class"""
@@ -45,7 +46,6 @@ class Perceptron:
             if m_pos == 'NNP' and h_pos == 'IN': return True
 
             if m_pos == 'IN' and h_pos == 'JJ': return True
-
         return False
 
     def features_dict(self, sentence, features):
@@ -100,6 +100,7 @@ class Perceptron:
                         w[pos + shift] += sign
                     pos += window
 
+
     def train(self, N):
         """
         train the model
@@ -108,16 +109,16 @@ class Perceptron:
         :return w: learnt weights
         """
         w = np.zeros(self._features.features_len(), dtype=int)
-
+        indices = [i for i in range(self._data.sentences_num)]
         for n in range(N):
             print('iteration', n + 1,'/', N)
-            for idx, sentence in enumerate(self._data.sentences):
+            for idx in indices:
+                sentence = self._data.sentences[idx]
                 inference_d_tree = self.sentence_inference(w, sentence.sentence_len, self._f_dict_list[idx])
                 if inference_d_tree != sentence.dependency_tree():
                     self.update_weights(w, sentence.dependency_tree(), sentence, self._f_dict_list[idx], 1)
                     self.update_weights(w, inference_d_tree, sentence, self._f_dict_list[idx], -1)
-                else:
-                    print('correct')
+            shuffle(indices)
         return w
 
 
