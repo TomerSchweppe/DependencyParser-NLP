@@ -182,22 +182,22 @@ class ComplexFeatures(BasicFeatures):
         if h == 0:
             p_pos_1 = None
         else:
-            p_pos_1 = h - 1
+            p_pos_1 = sentence(h - 1)[1]
 
         if m == 0:
             c_pos_1 = None
         else:
-            c_pos_1 = m - 1
+            c_pos_1 = sentence(m - 1)[1]
 
-        if h == sentence.sentence_len:
+        if h == sentence.sentence_len - 1:
             p_pos1 = None
         else:
-            p_pos1 = h + 1
+            p_pos1 = sentence(h + 1)[1]
 
-        if m == sentence.sentence_len:
+        if m == sentence.sentence_len - 1:
             c_pos1 = None
         else:
-            c_pos1 = m + 1
+            c_pos1 = sentence(m + 1)[1]
 
 
         p_pos_p_pos1_c_pos_1_c_pos = self._f_pos_pos_pos_pos(p_pos, p_pos1, c_pos_1, c_pos)
