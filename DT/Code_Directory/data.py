@@ -1,6 +1,7 @@
 # !/usr/bin/env python
 from sentence import *
 
+
 def sentence_preprocess(sentence_txt, is_labeled):
     """generate Sentence object from given sentence text"""
     word_list = []
@@ -37,12 +38,13 @@ def word_pos_wordpos_lists(sentences):
 
 class Data:
     """data class"""
+
     def __init__(self, file_name, is_labeled):
         """init sentences list, vocab list, pos list"""
         self.sentences = []
         with open(file_name, 'r') as fh:
             for sentence_txt in fh.read().split('\n\n'):
-                if sentence_txt != '': # avoid last empty sentence
+                if sentence_txt != '':  # avoid last empty sentence
                     self.sentences.append(sentence_preprocess(sentence_txt, is_labeled))
         self.sentences_num = len(self.sentences)
         self.vocab_list, self.pos_list, self.word_pos_pairs = word_pos_wordpos_lists(self.sentences)
@@ -87,7 +89,6 @@ if __name__ == '__main__':
     assert tmp_dict[11] == [12, 13]
     assert len(tmp_dict) == 10
 
-
     # validate vocab
     assert 'ROOT' in train.vocab_list
     assert 'ROOT' in test.vocab_list
@@ -95,7 +96,6 @@ if __name__ == '__main__':
     assert 'chairman' in train.vocab_list
     assert 'Minpeco' in test.vocab_list
     assert 'Washington' in comp.vocab_list
-
 
     # validate pos
     assert 'ROOT' in train.pos_list
@@ -105,7 +105,6 @@ if __name__ == '__main__':
     assert 'RB' in test.pos_list
     assert 'DT' in comp.pos_list
 
-
     # validate word pos pairs
     assert ('ROOT', 'ROOT') in train.word_pos_pairs
     assert ('ROOT', 'ROOT') in test.word_pos_pairs
@@ -114,6 +113,6 @@ if __name__ == '__main__':
     assert ('federal', 'JJ') in test.word_pos_pairs
     assert ('entertained', 'VBN') in comp.word_pos_pairs
 
-    #print(len(train.vocab_list), len(train.pos_list), len(train.word_pos_pairs))
+    # print(len(train.vocab_list), len(train.pos_list), len(train.word_pos_pairs))
 
     print('PASSED!')

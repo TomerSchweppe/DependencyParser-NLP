@@ -18,7 +18,7 @@ def evaluate(labeled_data, w, perceptron):
             total += 1
             if predicted[x] == ground_truth[x]:
                 correct += 1
-    return correct/total
+    return correct / total
 
 
 if __name__ == '__main__':
@@ -41,7 +41,7 @@ if __name__ == '__main__':
     else:
         train_features = ComplexFeatures(train_data.vocab_list, train_data.pos_list, train_data.word_pos_pairs)
 
-    if args.weights: # load trained weights
+    if args.weights:  # load trained weights
         train_w = pickle.load(open(args.weights, 'rb'))
     else:
         # init train
@@ -62,7 +62,7 @@ if __name__ == '__main__':
         print('train accuracy: ', train_accuracy)
         print('evaluation ended: ', time.time() - start)
         # save train weights
-        pickle.dump(train_w, open('cache/'+features_type+'_N'+str(N)+'.pickle','wb'))
+        pickle.dump(train_w, open('cache/' + features_type + '_N' + str(N) + '.pickle', 'wb'))
 
     # init test
     start = time.time()

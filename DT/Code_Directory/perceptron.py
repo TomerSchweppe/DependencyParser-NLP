@@ -14,13 +14,14 @@ def tree_2_parent(tree):
 
 class Perceptron:
     """perceptron class"""
+
     def __init__(self, data, features):
         """init perceptron, extract all features"""
         self._data = data
         self._features = features
-        self._f_dict_list = self.extract_features(data, features)
-        self._full_graphs = dict()
+        self._f_dict_list = self.extract_features()
         self._window_list = self.window_list()
+        self._full_graphs = dict()
         for sentence in self._data.sentences:
             if sentence.sentence_len not in self._full_graphs:
                 self._full_graphs[sentence.sentence_len] = self.full_graph(sentence.sentence_len)
@@ -41,15 +42,16 @@ class Perceptron:
                     f_dict[(h, m)] = [shift for shift, _ in self._features(h, m, sentence)]
         return f_dict
 
-    def extract_features(self, data, features):
+    def extract_features(self):
         """extract features for all sentences"""
         f_dict_list = []
-        for sentence in data.sentences:
+        for sentence in self._data.sentences:
             f_dict_list.append(self.features_dict(sentence))
         return f_dict_list
 
     def sentence_inference(self, w, sentence_len, f_dict):
         """inference on a given sentence"""
+
         def get_score(h, m):
             pos = 0
             score = 0
@@ -90,7 +92,6 @@ class Perceptron:
                         w[pos + shift] += -1
                     pos += window
 
-
     def train(self, N):
         """
         train the model
@@ -100,7 +101,7 @@ class Perceptron:
         w = np.zeros(self._features.features_len(), dtype=int)
         indices = [i for i in range(self._data.sentences_num)]
         for n in range(N):
-            print('iteration', n + 1,'/', N)
+            print('iteration', n + 1, '/', N)
             for idx in indices:
                 sentence = self._data.sentences[idx]
                 inference_d_tree = self.sentence_inference(w, sentence.sentence_len, self._f_dict_list[idx])

@@ -1,8 +1,7 @@
 # !/usr/bin/env python
-
-
 class Sentence:
     """sentence class"""
+
     def __init__(self, word_list, pos_list):
         """init sentence list of WordPos"""
         self._sentence = [('ROOT', 'ROOT')]
@@ -17,6 +16,7 @@ class Sentence:
 
 class LabeledSentence(Sentence):
     """labeled sentence class"""
+
     def __init__(self, word_list, pos_list, labels_list):
         """init dependency tree and labels list"""
         super(LabeledSentence, self).__init__(word_list, pos_list)
@@ -30,6 +30,7 @@ class LabeledSentence(Sentence):
         """return dependency tree"""
         return self._dt
 
+
 if __name__ == '__main__':
     word_list = ['ofir', 'tomer', 'nadav', 'roy']
     pos_list = ['S', 'S', 'T', 'T']
@@ -37,12 +38,12 @@ if __name__ == '__main__':
     # validate sentence
     sen = Sentence(word_list, pos_list)
     assert sen.sentence_len == 4 + 1
-    assert sen._sentence == [('ROOT', 'ROOT'), ('ofir', 'S'), ('tomer', 'S'), ('nadav','T'), ('roy', 'T')]
+    assert sen._sentence == [('ROOT', 'ROOT'), ('ofir', 'S'), ('tomer', 'S'), ('nadav', 'T'), ('roy', 'T')]
 
     # validate labaled sentence
     labels_list = [0, 1, 2, 3]
     l_sen = LabeledSentence(word_list, pos_list, labels_list)
-    assert l_sen._sentence == [('ROOT', 'ROOT'), ('ofir', 'S'), ('tomer', 'S'), ('nadav','T'), ('roy', 'T')]
+    assert l_sen._sentence == [('ROOT', 'ROOT'), ('ofir', 'S'), ('tomer', 'S'), ('nadav', 'T'), ('roy', 'T')]
     assert l_sen.dependency_tree() == {0: [1], 1: [2], 2: [3], 3: [4]}
 
     print('PASSED!')
