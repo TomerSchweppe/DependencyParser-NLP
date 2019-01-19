@@ -6,21 +6,14 @@ import argparse
 import pickle
 import time
 
-def tree_2_parent(tree):
-    p_dict = dict()
-    for p, children in tree.items():
-        for c in children:
-            p_dict[c] = p
-    return p_dict
-
 
 def evaluate(labeled_data, w, perceptron):
     """evaluate model accuracy per word"""
     total = 0
     correct = 0
     for idx, sentence in enumerate(labeled_data.sentences):
-        ground_truth = tree_2_parent(sentence.dependency_tree())
-        predicted = tree_2_parent(perceptron.sentence_inference(w, sentence.sentence_len, perceptron._f_dict_list[idx]))
+        ground_truth = sentence.dependency_tree()
+        predicted = perceptron.sentence_inference(w, sentence.sentence_len, perceptron._f_dict_list[idx])
         for x in range(1, sentence.sentence_len):
             total += 1
             if predicted[x] == ground_truth[x]:
@@ -35,13 +28,14 @@ if __name__ == '__main__':
     parser.add_argument("--weights", help="load trained weights")
     parser.add_argument("--N", help="number of iterations", default=1)
     parser.add_argument("--features", help="features type basic/complex", default='basic')
+    parser.add_argument("--train_data", help="path to training data", default='train.labeled')
     args = parser.parse_args()
 
     N = int(args.N)
     features_type = args.features
 
     # init train
-    train_data = Data('train.labeled', is_labeled=True)
+    train_data = Data(args.train_data, is_labeled=True)
     if (args.weights and 'basic' in args.weights) or (not args.weights and features_type == 'basic'):
         train_features = BasicFeatures(train_data.vocab_list, train_data.pos_list, train_data.word_pos_pairs)
     else:

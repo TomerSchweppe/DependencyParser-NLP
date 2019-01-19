@@ -24,10 +24,7 @@ class LabeledSentence(Sentence):
         self._dt = dict()
         for m_1, h in enumerate(self._labels_list):
             m = m_1 + 1
-            if h in self._dt:
-                self._dt[h].append(m)
-            else:
-                self._dt[h] = [m]
+            self._dt[m] = h
 
     def dependency_tree(self):
         """return dependency tree"""

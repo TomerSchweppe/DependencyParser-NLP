@@ -3,6 +3,15 @@ from chu_liu import *
 import numpy as np
 from random import shuffle
 
+
+def tree_2_parent(tree):
+    p_dict = dict()
+    for p, children in tree.items():
+        for c in children:
+            p_dict[c] = p
+    return p_dict
+
+
 class Perceptron:
     """perceptron class"""
     def __init__(self, data, features):
@@ -53,7 +62,7 @@ class Perceptron:
         graph = Digraph(self._full_graphs[sentence_len], get_score)
 
         mst = graph.mst()
-        return mst.successors
+        return tree_2_parent(mst.successors)
 
     def full_graph(self, node_num):
         """generate full graph"""
@@ -65,32 +74,21 @@ class Perceptron:
 
     def update_weights(self, w, exact_d_tree, infer_d_tree, f_dict):
         """update weights"""
-        for h, m_list in exact_d_tree.items():
-            for m in m_list:
-                if m not in infer_d_tree.get(h, []):
-                    pos = 0
-                    for shift, window in zip(f_dict.get((h, m), -1),  self._window_list):
-                        if shift != -1:
-                            w[pos + shift] += 1
-                        pos += window
+        for m, h in exact_d_tree.items():
+            if infer_d_tree[m] != h:
+                pos = 0
+                for shift, window in zip(f_dict.get((h, m), -1), self._window_list):
+                    if shift != -1:
+                        w[pos + shift] += 1
+                    pos += window
 
-        for h, m_list in infer_d_tree.items():
-            for m in m_list:
-                if m not in exact_d_tree.get(h, []):
-                    pos = 0
-                    for shift, window in zip(f_dict.get((h, m), -1), self._window_list):
-                        if shift != -1:
-                            w[pos + shift] += -1
-                        pos += window
-
-
-    def compare_trees(self, tree1, tree2):
-        """compare trees"""
-        for h, m_list in tree1.items():
-            for m in m_list:
-                if m not in tree2.get(h, []):
-                    return False
-        return True
+        for m, h in infer_d_tree.items():
+            if exact_d_tree[m] != h:
+                pos = 0
+                for shift, window in zip(f_dict.get((h, m), -1), self._window_list):
+                    if shift != -1:
+                        w[pos + shift] += -1
+                    pos += window
 
 
     def train(self, N):
@@ -106,7 +104,7 @@ class Perceptron:
             for idx in indices:
                 sentence = self._data.sentences[idx]
                 inference_d_tree = self.sentence_inference(w, sentence.sentence_len, self._f_dict_list[idx])
-                if not self.compare_trees(sentence.dependency_tree(), inference_d_tree):
+                if sentence.dependency_tree() != inference_d_tree:
                     self.update_weights(w, sentence.dependency_tree(), inference_d_tree, self._f_dict_list[idx])
             shuffle(indices)
         return w
