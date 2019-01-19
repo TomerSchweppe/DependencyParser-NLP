@@ -13,9 +13,6 @@ class Feature:
         self._pos_idx = {pos: idx for idx, pos in enumerate(self._pos_list)}
         self._word_pos_pairs_idx = {(word, pos): idx for idx, (word, pos) in enumerate(self._word_pos_pairs)}
 
-    def __call__(self):
-        """call function"""
-        pass
 
 
 class WordPos(Feature):
@@ -115,6 +112,56 @@ class PosPosPosPos(Feature):
         return  pos1_idx * (len(self._pos_idx) ** 3) + pos2_idx * (len(self._pos_idx) ** 2) + pos3_idx * len(self._pos_idx) + pos4_idx, len(self._pos_idx) ** 4
 
 
+class Direction(Feature):
+    """direction feature class"""
+    def __init__(self, vocab_list, pos_list, word_pos_pairs):
+        """init"""
+        super(Direction, self).__init__(vocab_list, pos_list, word_pos_pairs)
+
+    def __call__(self, h, m):
+        """generate feature tuple"""
+        if h < m: # right edge
+            return 1, 2
+        return 0, 2 # left edge
+
+
+class Distance(Feature):
+    """distance feature class"""
+    def __init__(self, vocab_list, pos_list, word_pos_pairs, max_len):
+        """init"""
+        super(Distance, self).__init__(vocab_list, pos_list, word_pos_pairs)
+        self._max_len = max_len
+
+    def __call__(self, h, m): # h != m
+        """generate feature tuple"""
+        dist = abs(h - m)
+        if dist < self._max_len:
+            return dist, self._max_len
+        return -1, self._max_len
+
+
+class BetweenPos(Feature):
+    """pos in between"""
+    def __init__(self, vocab_list, pos_list, word_pos_pairs):
+        """init"""
+        super(BetweenPos, self).__init__(vocab_list, pos_list, word_pos_pairs)
+
+
+    def __call__(self, h, m, sentence):
+        """generate feature tuple"""
+        between_pos_list = []
+        for idx in range(min(h,m) + 1, max(h,m)):
+            between_pos_list.append(sentence(idx)[1])
+        ret = []
+        for pos in self._pos_list:
+            if pos in between_pos_list:
+                ret.append((0, 1))
+            else:
+                ret.append((-1, 1))
+        return ret
+
+
+
 class BasicFeatures:
     """basic features class"""
 
@@ -134,7 +181,7 @@ class BasicFeatures:
     def features_len(self):
         """return the number of feature bits"""
         sum = 0
-        for _, size in self(0,0,Sentence(['',''],['',''])):
+        for _, size in self(0 ,1, Sentence(['',''],['',''])):
             sum += size
         return sum
 
@@ -166,6 +213,9 @@ class ComplexFeatures(BasicFeatures):
         super(ComplexFeatures, self).__init__(vocab_list, pos_list, word_pos_pairs)
         self._f_word_pos_word_pos = WordPosWordPos(vocab_list, pos_list, word_pos_pairs)
         self._f_pos_pos_pos_pos = PosPosPosPos(vocab_list, pos_list, word_pos_pairs)
+        self._f_direction = Direction(vocab_list, pos_list, word_pos_pairs)
+        self._f_distance = Distance(vocab_list, pos_list, word_pos_pairs, 60) # it's a kind of magic
+        self._f_between_pos = BetweenPos(vocab_list, pos_list, word_pos_pairs)
 
 
     def __call__(self, h, m, sentence):
@@ -205,8 +255,11 @@ class ComplexFeatures(BasicFeatures):
         p_pos_p_pos1_c_pos_c_pos1 = self._f_pos_pos_pos_pos(p_pos, p_pos1, c_pos, c_pos1)
         p_pos_1_p_pos_c_pos_c_pos1 = self._f_pos_pos_pos_pos(p_pos_1, p_pos, c_pos, c_pos1)
 
+        p_c_dist = self._f_distance(h, m)
+        p_c_direction = self._f_direction(h, m)
+
         return basic_features + [f_p_word_p_pos_c_word_c_pos, p_pos_p_pos1_c_pos_1_c_pos, p_pos_1_p_pos_c_pos_1_c_pos,
-                                 p_pos_p_pos1_c_pos_c_pos1, p_pos_1_p_pos_c_pos_c_pos1]
+                                 p_pos_p_pos1_c_pos_c_pos1, p_pos_1_p_pos_c_pos_c_pos1, p_c_dist, p_c_direction] + self._f_between_pos(h, m, sentence)
 
 
 if __name__ == '__main__':
@@ -300,5 +353,24 @@ if __name__ == '__main__':
     assert pos_pos_pos_pos('T', 'T', 'S', 'T') == (13, 16)
     assert pos_pos_pos_pos('T', 'T', 'T', 'S') == (14, 16)
     assert pos_pos_pos_pos('T', 'T', 'T', 'T') == (15, 16)
+
+    # validate direction
+    direction = Direction(vocab_list, pos_list, word_pos_pairs)
+    assert direction(0, 1) == (1, 2)
+    assert direction(1, 0) == (0, 2)
+
+    # validate distance
+    dist = Distance(vocab_list, pos_list, word_pos_pairs, 5)
+    assert dist(0, 1) == (1, 5)
+    assert dist(1, 0) == (1, 5)
+    assert dist(5, 9) == (4, 5)
+    assert dist(9, 6) == (3, 5)
+    assert dist(5, 10) == (-1, 5)
+
+    # validate between pos
+    between_pos = BetweenPos(vocab_list, pos_list, word_pos_pairs)
+    sentence = Sentence(['ofir', 'roy','tomer'], ['S', 'T', 'S'])
+    assert between_pos(1, 3, sentence) == [(-1, 1), (0, 1)]
+    assert between_pos(0, 3, sentence) == [(0, 1), (0, 1)]
 
     print('PASSED!')
