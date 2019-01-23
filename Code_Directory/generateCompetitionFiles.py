@@ -3,8 +3,8 @@ from perceptron import *
 from features import *
 import pickle
 
-MODEL1_WEIGHTS = 'cache/basic_N1.pickle'
-MODEL2_WEIGHTS = 'cache/complex_N1.pickle'
+MODEL1_WEIGHTS = 'cache/basic_N20.pickle'
+MODEL2_WEIGHTS = 'cache/complex_N20.pickle'
 
 
 def predict(data, w, perceptron):
